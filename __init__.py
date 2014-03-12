@@ -83,13 +83,13 @@ class WotBotter:
             if(self.poi[i][0] - 5 < x < self.poi[i][0] + 5 and self.poi[i][1] - 5 < y < self.poi[i][1] + 5):
                 #self.seti()
                 return True
-            BigWorld.player().base.vehicle_moveWith(flags)
+            BigWorld.player().moveVehicle(flags, True)
         except Exception, ex:
             log('[WOTBOT Move] throwed exception: %s' % (ex.message))
             print sys.exc_traceback.tb_lineno 
 
     def handleKeyEvent(self, event):
-        #log ("%s %s %s %s" % (event.isKeyDown, event.isKeyUp ,event.key, event.isCtrlDown))
+        log ("%s %s %s %s" % (event.isKeyDown, event.isKeyUp ,event.key, event.isCtrlDown))
         pass
 
     def running(self):
@@ -106,6 +106,7 @@ class WotBotter:
     def onEnterWorld(self, *args):
         """ Executet when map is loaded """
         log(">onEnterWorld")
+        self.ownVehicle = BigWorld.entity(BigWorld.player().playerVehicleID)
         self.boundingBox = BigWorld.player().arena.arenaType.boundingBox
         walk.set_map(-self.boundingBox[0][0], self.boundingBox[1][1])
         print BigWorld.player().arena.arenaType.boundingBox
@@ -161,15 +162,21 @@ def _wotbot_callback():
             if g_windowsManager.battleWindow is not None:
                  g_windowsManager.battleWindow.call('battle.PlayerMessagesPanel.ShowMessage', ['0', msg, 'gold'])
         if BigWorld.isKeyDown(Keys.KEY_F2):
-            (dst_x, dst_y) = (wb.subpos[wb.j][0], wb.subpos[wb.j][1])
-            player = BigWorld.player()
-            (speed,rspeed) = player.getOwnVehicleSpeeds()
-            (x,z,y) = player.getOwnVehiclePosition()
-            yaw = player.vehicle.yaw
-            log('x: %f y: %f z: %f => (%i, %i)' % (x, y, z, dst_x, dst_y))
-            rad = poi_angle = wb.rrad(x,y,dst_x,dst_y)
-            log ("real: %f ?? needed: %f" % (yaw, poi_angle))
-            print (player.userSeesWorld)
+            log("F2 Pressed")
+            BigWorld.player().shoot()
+            print dir(Math.Vector3)
+            print Math.Vector3(0,1,0)
+            #(dst_x, dst_y) = (wb.subpos[wb.j][0], wb.subpos[wb.j][1])
+            #player = BigWorld.player()
+            #(speed,rspeed) = player.getOwnVehicleSpeeds()
+            #(x,z,y) = player.getOwnVehiclePosition()
+            #yaw = player.vehicle.yaw
+            #log('x: %f y: %f z: %f => (%i, %i)' % (x, y, z, dst_x, dst_y))
+            #rad = poi_angle = wb.rrad(x,y,dst_x,dst_y)
+            #log ("real: %f ?? needed: %f" % (yaw, poi_angle))
+            #print (player.userSeesWorld)
+            #from AvatarInputHandler import control_modes
+
   
     except Exception, ex:
         log('[WOTBOT] throwed exception: %s' % (ex.message))
@@ -185,6 +192,9 @@ def _RegisterEvents():
         from Avatar import PlayerAvatar
         RegisterEvent(PlayerAvatar, 'onEnterWorld', wb.onEnterWorld)
         RegisterEvent(PlayerAvatar, 'onLeaveWorld', wb.onLeaveWorld)
+        import game
+        RegisterEvent(game, 'handleKeyEvent', wb.handleKeyEvent)
+
 
         #from gui import g_keyEventHandlers, g_mouseEventHandlers
         #g_keyEventHandlers.add(wb.handleKeyEvent)
