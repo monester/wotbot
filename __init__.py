@@ -22,12 +22,14 @@ import Math
 from walker import walker
 ## For debugging import sys lib
 import sys
+#import game
 #log(dir(BigWorld.player()))
 #log(dir(g_playerEvents))
 
 
 class WotBotter:
     enabled = False
+    connect_timer=0
     i=0
     #poi = [[-400,-400],[-400,-200],[-300,-200],[-300,200],[0,200],[0,450],[-450,450]]
     poi = [[0,0],[-280, 380]]
@@ -89,7 +91,9 @@ class WotBotter:
             print sys.exc_traceback.tb_lineno 
 
     def handleKeyEvent(self, event):
-        log ("%s %s %s %s" % (event.isKeyDown, event.isKeyUp ,event.key, event.isCtrlDown))
+        import game
+        isDown, key, mods, isRepeat = game.convertKeyEvent(event) 
+        log ("%s %s %s %s" % (event.isKeyDown(), event.isKeyUp(),event.key, event.isCtrlDown()))
         pass
 
     def running(self):
@@ -130,14 +134,25 @@ wb = WotBotter()
 walk = walker('')
 walk.load_maze('')
 
-#wb.subpos = walk.get_path(20,20,
 
 def _wotbot_callback():
     try:
-    	if wb.running():
+        from ConnectionManager import connectionManager
+        if connectionManager.isDisconnected() and wb.connect_timer > 100:
+            log("[WOTBOT] Trying to connect...")
+            url="login.p1.worldoftanks.net:20014"
+            f=open("acc.txt","r")
+            username, password = f.read().split("\n")
+            f.close()
+            publicKey="loginapp_wot.pubkey"
+            connectionManager.connect(url, username, password, publicKey)
+            wb.connect_timer = 0
+        elif connectionManager.isConnected():
+            wb.connect_timer = 0
+        else:
+            wb.connect_timer += 1
+        if wb.running():
             (x,z,y) = BigWorld.player().getOwnVehiclePosition()
-            #(dx,dy) = (-wb.boundingBox[0][0], wb.boundingBox[1][1])
-            #walk.get_path(x,y,0,0,dx,dy)
             if wb.move():
                 wb.seti()
                 (x,z,y) = BigWorld.player().getOwnVehiclePosition()
